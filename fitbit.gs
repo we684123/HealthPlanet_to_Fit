@@ -52,7 +52,7 @@ const fbPostHealthData = (service, healthData) => {
         fbPostWeight(service,elem.date,elem.keydata);
         break;
       default:
-        console.log("unkown tag. tag = " + elem.tag);
+        console.log("unknown tag. tag = " + elem.tag);
         break;
     }
   });
