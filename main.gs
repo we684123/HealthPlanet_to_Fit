@@ -50,20 +50,6 @@ const run = () => {
     console.log(/(&state=.*?)&/.exec(hpService.getAuthorizationUrl())[1]);
   }
 
-  const gfService = getGFService();
-
-  // GoogleFitへの認証が完了していない場合は認証用URLを出力して終了する
-  if (gfService.hasAccess()) {
-    console.log("GoogleFit is ready");
-    createGFDataSource(gfService, googleFit.weight);
-    createGFDataSource(gfService, googleFit.fat);
-    postHealthData(gfService, googleFit.weight, healthData);
-    postHealthData(gfService, googleFit.fat, healthData);
-  } else {
-    console.log("Please go to the URL below to complete the authentication with GoogleFit");
-    console.log(gfService.getAuthorizationUrl());
-  }
-
   const fbService = getFBService();
 
   // Fitbitへの認証が完了していない場合は認証用URLを出力して終了する
@@ -82,7 +68,6 @@ const run = () => {
  */
 const logoutFromService = () => {
   getHPService().reset();
-  getGFService().reset();
   getFBService().reset();
   property.deleteAllProperties();
   console.log("Logged out successfully")
