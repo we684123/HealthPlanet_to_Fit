@@ -65,6 +65,17 @@ const run = () => {
 /**
  * 以日期區間匯入 HealthPlanet 資料並同步至 Fitbit。
  */
+const runLast1day = () => {
+  const from = new Date();
+  const to = new Date();
+  from.setDate(to.getDate() - 1);
+  console.info("Running for last 1 day: from %s to %s", from.toISOString(), to.toISOString());
+  runWithDateRange(from, to);
+}
+
+/**
+ * 以日期區間匯入 HealthPlanet 資料並同步至 Fitbit。
+ */
 const runByDayInterval = () => {
   const from = new Date('2025-01-01');
   const to = new Date('2025-01-05');
