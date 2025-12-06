@@ -62,5 +62,31 @@ const fetchHealthData = (service) => {
   const response = UrlFetchApp.fetch(healthPlanet.innerscanUrl, options);
   console.log(payload);
   console.log(response.getContentText());
-  return JSON.parse(response);
+  return JSON.parse(response.getContentText());
+}
+
+/**
+ * HealthPlanet から指定期間のデータを取得する。
+ * @param {any} service HealthPlanet OAuth2 service
+ * @param {string} from yyyyMMddHHmmss
+ * @param {string} to   yyyyMMddHHmmss
+ */
+const fetchHealthDataInRange = (service, from, to) => {
+  const payload = {
+    "access_token": service.getAccessToken(),
+    "date": healthPlanet.payloadDate,
+    "tag": healthPlanet.payloadTag,
+    "from": from,
+    "to": to,
+  };
+
+  const options = {
+    "method": "POST",
+    "payload": payload,
+  };
+
+  const response = UrlFetchApp.fetch(healthPlanet.innerscanUrl, options);
+  console.log(payload);
+  console.log(response.getContentText());
+  return JSON.parse(response.getContentText());
 }

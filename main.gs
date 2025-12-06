@@ -63,6 +63,15 @@ const run = () => {
 }
 
 /**
+ * 以日期區間匯入 HealthPlanet 資料並同步至 Fitbit。
+ */
+const runByDayInterval = () => {
+  const from = new Date('2025-01-01');
+  const to = new Date('2025-01-05');
+  runWithDateRange(from, to);
+}
+
+/**
  * HealthPlanetとGoogleFitとのOAuth認証を解除する（開発時用、単独で実行する）。
  * 各サービスのサイトで接続を解除した後に実行する。
  */
@@ -72,3 +81,71 @@ const logoutFromService = () => {
   property.deleteAllProperties();
   console.log("Logged out successfully")
 }
+
+/**
+ * 指定日期區間(年月日)匯入 HealthPlanet 資料並同步至 Fitbit。
+ * @param {Date|string} fromDate 起始日 (日期或可被 Date 建立的字串)
+ * @param {Date|string} toDate   結束日 (日期或可被 Date 建立的字串)
+ */
+const runWithDateRange = (fromDate, toDate) => {
+  try {
+    setProps();
+
+    const hpService = getHPService();
+    if (!hpService.hasAccess()) {
+      console.log("Please access the URL below to complete your authentication with HealthPlanet");
+      console.log(hpService.getAuthorizationUrl());
+      console.log("If you get a Google Drive error, please add the following parameter to the URL to access it");
+      console.log(/(&state=.*?)&/.exec(hpService.getAuthorizationUrl())[1]);
+      return;
+    }
+
+    const fbService = getFBService();
+    if (!fbService.hasAccess()) {
+      console.log("Please go to the URL below to complete the authentication with Fitbit");
+      console.log(fbService.getAuthorizationUrl());
+      return;
+    }
+
+    const from = formatHpDateTime(fromDate, false);
+    const to = formatHpDateTime(toDate, true);
+
+    if (from >= to) {
+      throw new Error("fromDate 必須早於 toDate");
+    }
+
+    const rangeDays = (new Date(toDate) - new Date(fromDate)) / (1000 * 60 * 60 * 24);
+    if (rangeDays > 93) {
+      console.log("指定區間超過 3 個月，HealthPlanet 會自動縮短為 3 個月內的資料");
+    }
+
+    console.log("Fetch HealthPlanet data from %s to %s", from, to);
+    const healthData = fetchHealthDataInRange(hpService, from, to);
+    fbPostHealthData(fbService, healthData);
+  } catch (e) {
+    console.error("runWithDateRange failed: %s", e.message);
+    throw e;
+  }
+}
+
+/**
+ * 將日期轉成 HealthPlanet 要求的 yyyyMMddHHmmss 格式。
+ * @param {Date|string} value 來源日期
+ * @param {boolean} endOfDay 是否使用當日 23:59:59
+ * @returns {string} yyyyMMddHHmmss
+ */
+const formatHpDateTime = (value, endOfDay) => {
+  const date = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+  if (isNaN(date.getTime())) {
+    throw new Error("無法解析的日期: " + value);
+  }
+
+  if (endOfDay) {
+    date.setHours(23, 59, 59, 0);
+  } else {
+    date.setHours(0, 0, 0, 0);
+  }
+
+  return Utilities.formatDate(date, Session.getScriptTimeZone(), "yyyyMMddHHmmss");
+}
+
