@@ -42,7 +42,7 @@ const run = () => {
   // HealthPlanetへの認証が完了していない場合は認証用URLを出力して終了する
   if (hpService.hasAccess()) {
     console.log("HealthPlanet is ready");
-    healthData = fetchHealthData(hpService);
+    healthData = sortHealthDataByDate(fetchHealthData(hpService));
   } else {
     console.log("Please access the URL below to complete your authentication with HealthPlanet");
     console.log(hpService.getAuthorizationUrl());
@@ -120,7 +120,7 @@ const runWithDateRange = (fromDate, toDate) => {
     }
 
     console.log("Fetch HealthPlanet data from %s to %s", from, to);
-    const healthData = fetchHealthDataInRange(hpService, from, to);
+  const healthData = sortHealthDataByDate(fetchHealthDataInRange(hpService, from, to));
     fbPostHealthData(fbService, healthData);
   } catch (e) {
     console.error("runWithDateRange failed: %s", e.message);
@@ -147,5 +147,16 @@ const formatHpDateTime = (value, endOfDay) => {
   }
 
   return Utilities.formatDate(date, Session.getScriptTimeZone(), "yyyyMMddHHmmss");
+}
+
+/**
+ * 依日期升冪排序 HealthPlanet 回傳資料。
+ */
+const sortHealthDataByDate = (healthData) => {
+  if (!healthData || !healthData.data) {
+    return healthData;
+  }
+  healthData.data.sort((a, b) => a.date.localeCompare(b.date));
+  return healthData;
 }
 
