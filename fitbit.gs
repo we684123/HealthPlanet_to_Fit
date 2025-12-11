@@ -43,19 +43,36 @@ const fbLogoutFromService = () => {
  * Fitbitへヘルスデータ（体重・体脂肪率）を登録する。
  */
 const fbPostHealthData = (service, healthData) => {
-  healthData.data.map((elem) => {
-    switch(elem.tag){
+  if (!healthData || !healthData.data) {
+    console.log("No health data to post");
+    return;
+  }
+
+  for (const elem of healthData.data) {
+    let response;
+    switch (elem.tag) {
       case BODY_FAT:
-        fbPostFat(service,elem.date,elem.keydata);
+        response = fbPostFat(service, elem.date, elem.keydata);
         break;
       case BODY_WEIGHT:
-        fbPostWeight(service,elem.date,elem.keydata);
+        response = fbPostWeight(service, elem.date, elem.keydata);
         break;
       default:
-        console.log("unkown tag. tag = " + elem.tag);
-        break;
+        console.log("unknown tag. tag = " + elem.tag);
+        continue;
     }
-  });
+
+    if (response && response.getResponseCode && response.getResponseCode() === 429) {
+      const quotaMsg = [
+        "Fitbit API quota exceeded (429). Stop uploads.",
+        "Retry after 1 hour (limit 150 requests/hour).",
+        "請等一小時後再試，每小時最多150次請求。",
+        "1時間後に再度お試しください。1時間あたり150回のリクエスト制限があります。"
+      ].join("\n");
+      console.error(quotaMsg);
+      throw new Error("Fitbit API quota exceeded (429)");
+    }
+  }
 }
 
 function fbPostWeight(service, date, weight){
@@ -79,7 +96,7 @@ function fbPostWeight(service, date, weight){
   };
 
   var responseWeight = UrlFetchApp.fetch(urlWeight, optionsWeight);
-  if (responseWeight.getResponseCode = HTTP_STATUS_CODE_OK) {
+  if (responseWeight.getResponseCode() === HTTP_STATUS_CODE_OK) {
     console.log("Fitbit weight logs(%s) have been registered successfully", date);
     console.log(responseWeight.getContentText());
   } else {
@@ -87,6 +104,7 @@ function fbPostWeight(service, date, weight){
     console.log(responseWeight.getResponseCode());
     console.log(responseWeight.getContentText());
   }
+  return responseWeight;
 }
 
 function fbPostFat(service, date, fat){
@@ -110,7 +128,7 @@ function fbPostFat(service, date, fat){
   };
 
   var responseFat = UrlFetchApp.fetch(urlFat, optionsFat);
-  if (responseFat.getResponseCode = HTTP_STATUS_CODE_OK) {
+  if (responseFat.getResponseCode() === HTTP_STATUS_CODE_OK) {
     console.log("Fitbit fat logs(%s) have been registered successfully", date);
     console.log(responseFat.getContentText());
   } else {
@@ -118,4 +136,5 @@ function fbPostFat(service, date, fat){
     console.log(responseFat.getResponseCode());
     console.log(responseFat.getContentText());
   }
+  return responseFat;
 }
