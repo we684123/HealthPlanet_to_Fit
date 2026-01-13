@@ -1,5 +1,5 @@
 
-const HTTP_STATUS_CODE_OK = 200;
+const HTTP_STATUS_CODE_OK = 201;
 const HTTP_STATUS_CODE_CONFLICT = 409;
 const TO_NS = 1000 * 1000 * 1000;
 const property = PropertiesService.getUserProperties();
